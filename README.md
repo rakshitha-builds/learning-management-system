@@ -49,22 +49,45 @@ flowchart LR
 ```
 
 ## 6. Quick start
-**Docker (everything incl. LiveKit):**
+
+### Option A — Windows without Docker (tested path)
+Install once (PowerShell as Administrator): `winget install OpenJS.NodeJS.LTS Gyan.FFmpeg MongoDB.Server Memurai.MemuraiDeveloper`
+(Memurai is Redis for Windows; MongoDB and Memurai run as background services. Keep at least 1 GB free on the MongoDB drive.)
+
+```powershell
+git clone https://github.com/rakshitha-builds/learning-management-system.git
+cd learning-management-system
+
+Copy-Item backend\.env.example backend\.env
+Copy-Item frontend\.env.example frontend\.env
+cd backend;  npm install; npm run seed        # installs + loads demo data
+cd ..\frontend; npm install
+```
+Run in **three** PowerShell windows:
+```powershell
+cd backend;  npm run dev       # 1) API        http://localhost:5000
+cd backend;  npm run worker    # 2) FFmpeg/BullMQ video worker
+cd frontend; npm run dev       # 3) Website    http://localhost:5173
+```
+Live classes also need a LiveKit server: download `livekit_1.9.0_windows_amd64.zip` from github.com/livekit/livekit/releases, unzip and run `.\livekit-server.exe --dev` (keys `devkey` / `secret`, already the defaults in `backend/.env.example`), then restart the API.
+
+### Option B — Docker (everything incl. LiveKit)
 ```bash
 cp .env.example .env            # set JWT_SECRET
 docker compose up --build -d
 docker compose --profile seed run --rm seed
 # open http://localhost:5173
 ```
-**Manual (Windows/PowerShell, macOS, Linux):** see [docs/SETUP.md](docs/SETUP.md) — needs Node 18+, MongoDB, Redis, FFmpeg (+ LiveKit for live classes).
-```powershell
-.\scripts\setup.ps1
-cd backend; npm run seed
-cd backend;  npm run dev       # terminal 1  API  :5000
-cd backend;  npm run worker    # terminal 2  FFmpeg/BullMQ worker
-cd frontend; npm run dev       # terminal 3  UI   :5173
-```
-Demo logins: `admin@learnsphere.dev / Admin@123` · `priya@learnsphere.dev / Instructor@123` · `rakshitha@learnsphere.dev / Student@123`
+macOS/Linux manual setup and troubleshooting: [docs/SETUP.md](docs/SETUP.md).
+
+### Demo logins (after seeding)
+| Role | Email | Password |
+|---|---|---|
+| Student | `rakshitha@learnsphere.dev` | `Student@123` |
+| Instructor | `priya@learnsphere.dev` | `Instructor@123` |
+| Admin | `admin@learnsphere.dev` | `Admin@123` |
+
+> The login page has Student / Instructor / Admin buttons that fill these in. If your browser autofills another saved login, click the button again.
 
 ## 7. Environment variables
 Full annotated lists: [`backend/.env.example`](backend/.env.example), [`.env.example`](.env.example) (Docker), [`frontend/.env.example`](frontend/.env.example).
@@ -133,5 +156,4 @@ Course ratings & reviews · coupons/subscriptions · email + push notifications 
 backend/   src (config, models, validators, middleware, controllers, services, workers, routes, socket, utils) · scripts · tests
 frontend/  src (app, components, pages/{public,student,instructor,admin,shared}, tests)
 docs/      API · ARCHITECTURE · SETUP · TESTING · DEPLOYMENT · PRESENTATION
-tests/     e2e-smoke.js        scripts/  setup.ps1 · setup.sh · run-all-tests.sh · gen-api-docs.js
-```
+tests/     e2e-smoke.js        scripts/  setup.ps1 · setup.sh · run-all-tests.sh · gen-api-docs.
