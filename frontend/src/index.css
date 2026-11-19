@@ -1,0 +1,20 @@
+@import '@livekit/components-styles';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --accent: 15 118 110; --accent-soft: 204 240 233; --accent-ink: 6 78 70; }
+[data-theme='student'] { --accent: 15 118 110; --accent-soft: 204 240 233; --accent-ink: 6 78 70; }
+[data-theme='instructor'] { --accent: 79 70 229; --accent-soft: 224 231 255; --accent-ink: 55 48 163; }
+[data-theme='admin'] { --accent: 217 119 6; --accent-soft: 254 235 200; --accent-ink: 146 64 14; }
+
+body { @apply bg-paper font-sans text-ink antialiased; }
+h1, h2, h3 { letter-spacing: -0.01em; }
+.font-display { font-feature-settings: 'ss01'; }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+.scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+.fade-in { animation: fade .25s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.skeleton { background: linear-gradient(90deg, #ece9e1 25%, #f4f2ec 37%, #ece9e1 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+.lk-room-container { --lk-bg: #0f172a; }
