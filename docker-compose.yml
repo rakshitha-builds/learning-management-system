@@ -1,0 +1,79 @@
+# LearnSphere LMS — full local stack:  docker compose up --build
+# Seed demo data (once):               docker compose --profile seed run --rm seed
+name: learnsphere
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  MONGO_URI: mongodb://mongo:27017/learnsphere
+  REDIS_URL: redis://redis:6379
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (copy .env.example)}
+  API_BASE_URL: ${API_PUBLIC_URL:-http://localhost:5000}
+  CLIENT_URL: ${CLIENT_PUBLIC_URL:-http://localhost:5173}
+  STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+  AWS_REGION: ${AWS_REGION:-ap-south-1}
+  AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+  AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+  AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+  CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN:-}
+  CLOUDFRONT_KEY_PAIR_ID: ${CLOUDFRONT_KEY_PAIR_ID:-}
+  CLOUDFRONT_PRIVATE_KEY: ${CLOUDFRONT_PRIVATE_KEY:-}
+  LIVEKIT_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
+  LIVEKIT_API_URL: http://livekit:7880
+  LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-devkey}
+  LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-secret-secret-secret-secret-secret-1234}
+  RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+  RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+  RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+  ALLOW_SIMULATED_PAYMENTS: "true"   # local demo only; remove for real deployments
+
+services:
+  mongo:
+    image: mongo:7
+    volumes: [mongo-data:/data/db]
+    healthcheck: { test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"], interval: 5s, timeout: 5s, retries: 20 }
+
+  redis:
+    image: redis:7-alpine
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 20 }
+
+  livekit:
+    image: livekit/livekit-server:v1.9
+    command: --dev --bind 0.0.0.0        # dev mode: single node, keys come from LIVEKIT_KEYS
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY:-devkey}: ${LIVEKIT_API_SECRET:-secret-secret-secret-secret-secret-1234}"
+    ports: ["7880:7880", "7881:7881", "7882:7882/udp"]
+
+  api:
+    build: ./backend
+    environment: *backend-env
+    ports: ["5000:5000"]
+    volumes: [media:/data]
+    depends_on: { mongo: { condition: service_healthy }, redis: { condition: service_healthy } }
+
+  worker:                                 # BullMQ + FFmpeg video processing
+    build: ./backend
+    command: ["node", "src/workers/videoWorker.js"]
+    environment: *backend-env
+    volumes: [media:/data]                # shares the same storage volume as the API
+    depends_on: { mongo: { condition: service_healthy }, redis: { condition: service_healthy } }
+
+  frontend:
+    build:
+      context: ./frontend
+      args: { VITE_API_URL: "${API_PUBLIC_URL:-http://localhost:5000}" }
+    ports: ["5173:80"]
+    depends_on: [api]
+
+  seed:                                   # docker compose --profile seed run --rm seed
+    build: ./backend
+    profiles: [seed]
+    command: ["node", "scripts/seed.js"]
+    environment:
+      <<: *backend-env
+      NODE_ENV: development
+    volumes: [media:/data]
+    depends_on: { mongo: { condition: service_healthy } }
+
+volumes:
+  mongo-data:
+  media:
