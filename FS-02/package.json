@@ -1,0 +1,39 @@
+{
+  "name": "real-time-collaborative-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time collaborative workspace (Notion/Figma style) - Next.js, Yjs, TipTap, Prisma, PostgreSQL, Redis",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "setup:env": "node scripts/setup-env.js",
+    "db:generate": "npm run db:generate -w backend",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:migrate:dev": "npm run db:migrate:dev -w backend",
+    "db:studio": "npm run db:studio -w backend",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:backend2": "npm run dev:second -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "start:backend": "npm run start -w backend",
+    "start:frontend": "npm run start -w frontend",
+    "typecheck": "npm run typecheck -w backend && npm run typecheck -w frontend",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "load-test": "tsx tests/load-test.ts",
+    "test:e2e": "node tests/e2e/browser.e2e.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "playwright-core": "^1.65.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}
